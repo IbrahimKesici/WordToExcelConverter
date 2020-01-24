@@ -1,23 +1,39 @@
 from docx import Document
 
+class DocManager():
 
-def readDoc(fileName):
-    doc = Document(fileName)
-
-    return doc
-
-def getDocDetails(doc):
-   
-    return cityName, countryName, date, countryCode
-
-def searchHeader(header, doc):
-    for table in doc.tables:
-        for cell in table.rows[0].cells:
-            for paragraph in cell.paragraphs:
-                if "title" in paragraph.text:
-                    print(paragraph.text)
-                    return paragraph.text
+    def __init__(self, fileName, headers):
+        self.doc = Document(fileName)
+        self.paragraphs = [paragraph for paragraph in self.doc.paragraphs if paragraph.text != ""]
+        self.fileName = fileName
+        self.headers = headers
         
+
+    def getDetails(self):
+        countryCode = self.fileName.split("_")[-4]
+        year = self.fileName.split("_")[-2]
+  
+        for i in range(0, len(self.paragraphs)):
+            if self.paragraphs[i].text.lower() == "overall evaluation":
+                textSplited = self.paragraphs[i+1].text.split(", ")
+                cityName = textSplited[0]
+                countryName = textSplited[1]
+                break
+
+        return cityName, countryName, countryCode, year
+
+    def getDescription(self):
     
+        for i in range(0, len(self.paragraphs)):
+            if self.paragraphs[i].text.lower() == "factor ratings" or self.paragraphs[i].text.lower() == "\nfactor ratings":
+                index = i + 3
+                break
+
+        description ={}
+        for header in self.headers[5:]:
+            description[header] = self.paragraphs[index].text
+            index += 1
+
+        return description
 
     
