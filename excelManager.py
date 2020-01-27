@@ -1,27 +1,27 @@
 import pandas as pd
 from openpyxl.workbook import Workbook
 
-def convertToExcel(cityName, cityCode, countryName, countryCode, year, headers, descriptions):
-    
-    df = pd.DataFrame(columns= headers)
-    descriptionList = []
-    
-    descriptionList.append(year)
-    descriptionList.append(cityName)
-    descriptionList.append(cityCode)
-    descriptionList.append(countryName)
-    descriptionList.append(countryCode)
+def convertToExcel(results, headers):
+    dfGroup = pd.DataFrame(columns= headers)
 
-    for key, value in descriptions.items():
-        descriptionList.append(value)
+    #Group DataFrame
+    for city in results:
+        dfNew = pd.DataFrame([results[city]["Properties"] + results[city]["Content"]], columns = headers)
+        dfGroup = dfGroup.append(dfNew, ignore_index=True)
 
-    df2 = pd.DataFrame(descriptionList, columns = headers)
-    df.append(df2)
-    #pd.concat([pd.DataFrame(descriptionList, columns = headers)], ignore_index=True)
+    headers.insert(5, "Region")
+    dfLER = pd.DataFrame(columns= headers)
 
-    df.to_excel("output.xlsx", sheet_name= "Group_Data", index= False) 
+    #LER DataFrame
+    for city in results:
+        dfNew = pd.DataFrame([results[city]["Properties"] + results[city]["Rating"]], columns = headers)
+        dfLER = dfLER.append(dfNew, ignore_index=True)
 
-
+    #Write to excel
+    with pd.ExcelWriter('output.xlsx') as writer:
+        dfLER.to_excel(writer, sheet_name='LER_Data', index= False)  
+        dfGroup.to_excel(writer, sheet_name='Group_Data', index= False)
+    #df.to_excel("output.xlsx", sheet_name= sheetName, index= False) 
 
 
 

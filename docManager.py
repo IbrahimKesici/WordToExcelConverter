@@ -5,6 +5,7 @@ class DocManager():
     def __init__(self, fileName, headers):
         self.doc = Document(fileName)
         self.paragraphs = [paragraph for paragraph in self.doc.paragraphs if paragraph.text != ""]
+        self.ratingTable = self.doc.tables[0]
         self.fileName = fileName
         self.headers = headers
         
@@ -22,16 +23,23 @@ class DocManager():
 
         return cityName, countryName, countryCode, year
 
-    def getDescription(self):
-    
+    def getRating(self):
+        ratings = []
+        for row in self.ratingTable.rows[1:]:
+            ratings.append(row.cells[1].paragraphs[0].text)
+        return ratings
+
+    def getDescription(self, startIndex):
+        checkHeader = ["factor ratings","\nfactor ratings"]
+        
         for i in range(0, len(self.paragraphs)):
-            if self.paragraphs[i].text.lower() == "factor ratings" or self.paragraphs[i].text.lower() == "\nfactor ratings":
-                index = i + 3
+            if self.paragraphs[i].text.lower() in checkHeader:
+                index = i + startIndex
                 break
 
-        description ={}
+        description = []
         for header in self.headers[5:]:
-            description[header] = self.paragraphs[index].text
+            description.append(self.paragraphs[index].text)
             index += 1
 
         return description

@@ -1,6 +1,20 @@
 from docManager import DocManager as docM
 import excelManager as excel
 from IOManager import IOM
+import json 
+
+
+with open("config\cities.json", mode="r") as f:
+    citiesJSON = json.load(f)  
+
+
+def getMapping(cityName, field):
+    try:
+        result = citiesJSON.get(cityName)[field]
+    except:
+        return "NA"
+
+    return result
 
 
 def main():
@@ -11,18 +25,28 @@ def main():
 
     IO = IOM()
     docFiles = IO.getFiles()
+    resultDict = {}
     for docFile in docFiles:
         doc = docM(fileName = docFile, headers = headers)
 
         cityName, countryName, countryCode, year  = doc.getDetails()
-        description = doc.getDescription()
+        cityCode = getMapping(cityName, "Code")
+        region = getMapping(cityName, "Region")
+        
 
-        excel.convertToExcel(cityName,"x", countryName, countryCode, year, headers, description)
+        ratings = doc.getRating()
 
-        print(f"{cityName} - {countryName} - {countryCode} - {year}")
-        for key, value in description.items():
-            print(f"{key}: {value}")
-            print("")
+        description = doc.getDescription(startIndex = 3)
+
+        resultDict[cityName] = {}
+        resultDict[cityName]["Properties"] = [year, cityName, cityCode , countryName, countryCode]
+        resultDict[cityName]["Content"] = description
+        resultDict[cityName]["Rating"] = [region] + ratings
+    
+   
+
+    excel.convertToExcel(resultDict, headers)
+    
 
 if __name__ == "__main__":
     main()
