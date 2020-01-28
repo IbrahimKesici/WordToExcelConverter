@@ -1,7 +1,5 @@
 import os
 
-
-
 class IOM():
 
     def __init__(self):
@@ -17,17 +15,11 @@ class IOM():
             if not os.path.exists(folderPath):
                 os.makedirs(folderPath)
 
-    def convertToDocx(self):
-        #TODO: Convert doc files to docx 
-        pass
-
     def getFiles(self):
         filesPath = self.path + self.folders[0]
-        
-        docFiles = [filesPath + "\\" + file for file in os.listdir(filesPath) if ".docx" in file and not "~" in file]
+        docFiles = [filesPath + "\\" + fileName for fileName in os.listdir(filesPath) if ".docx" in fileName and not "~" in fileName]
     
         return docFiles
-
 
     def moveToFolder(self, folder):
         pass

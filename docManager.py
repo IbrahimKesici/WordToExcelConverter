@@ -1,14 +1,14 @@
 from docx import Document
 
+
 class DocManager():
 
     def __init__(self, fileName, headers):
+        self.fileName = fileName
         self.doc = Document(fileName)
         self.paragraphs = [paragraph for paragraph in self.doc.paragraphs if paragraph.text != ""]
-        self.ratingTable = self.doc.tables[0]
-        self.fileName = fileName
+        self.tables = self.doc.tables[:2]
         self.headers = headers
-        
 
     def getDetails(self):
         countryCode = self.fileName.split("_")[-4]
@@ -24,9 +24,16 @@ class DocManager():
         return cityName, countryName, countryCode, year
 
     def getRating(self):
+        ratingTable = self.tables[0]
+        scoreTable = self.tables[1]
+
         ratings = []
-        for row in self.ratingTable.rows[1:]:
+        for row in ratingTable.rows[1:]:
             ratings.append(row.cells[1].paragraphs[0].text)
+
+        for row in scoreTable.rows:
+            ratings.append(row.cells[1].paragraphs[0].text)
+
         return ratings
 
     def getDescription(self, startIndex):

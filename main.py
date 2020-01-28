@@ -4,7 +4,7 @@ from IOManager import IOM
 import json 
 
 
-with open("config\cities.json", mode="r") as f:
+with open("config\\cities.json", mode="r") as f:
     citiesJSON = json.load(f)  
 
 
@@ -22,31 +22,37 @@ def main():
                "Housing", "Climate and Physical Conditions", "Pollution", "Disease and Sanitation", "Medical Facilities",
                "Education Facilities", "Infrastructure", "Physical Remoteness", "Political Violence and Repression", "Political and Social Environment",
                "Crime", "Communications", "Cultural and Recreation Facilities", "Availability of Goods and Services"]
+    failedCities = {}
 
     IO = IOM()
     docFiles = IO.getFiles()
+
     resultDict = {}
     for docFile in docFiles:
-        doc = docM(fileName = docFile, headers = headers)
+        try:
+            doc = docM(fileName = docFile, headers = headers)
 
-        cityName, countryName, countryCode, year  = doc.getDetails()
-        cityCode = getMapping(cityName, "Code")
-        region = getMapping(cityName, "Region")
-        
+            cityName, countryName, countryCode, year  = doc.getDetails()
+            cityCode = getMapping(cityName, "Code")
+            region = getMapping(cityName, "Region")
+            
+            ratings = doc.getRating()
+            description = doc.getDescription(startIndex = 3)
 
-        ratings = doc.getRating()
-
-        description = doc.getDescription(startIndex = 3)
-
-        resultDict[cityName] = {}
-        resultDict[cityName]["Properties"] = [year, cityName, cityCode , countryName, countryCode]
-        resultDict[cityName]["Content"] = description
-        resultDict[cityName]["Rating"] = [region] + ratings
+            resultDict[cityName] = {}
+            resultDict[cityName]["Properties"] = [year, cityName, cityCode , countryName, countryCode]
+            resultDict[cityName]["Content"] = description
+            resultDict[cityName]["Rating"] = [region] + ratings
+        except Exception as ex:
+            failedCities[docFile] = ex
+            continue
+    try:
+        excel.convertToExcel(resultDict, headers)
+    except Exception as ex:
+        print(f"Problem: Writing to Excel - {ex}")
     
-   
-
-    excel.convertToExcel(resultDict, headers)
-    
+    for failedCity, reason  in failedCities.items():
+        print(f"{failedCity} - {reason}")
 
 if __name__ == "__main__":
     main()
