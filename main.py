@@ -1,7 +1,7 @@
 from docManager import DocManager as docM
 import excelManager as excel
 from IOManager import IOM
-import json 
+import json, logging
 
 
 with open("config\\cities.json", mode="r") as f:
@@ -22,15 +22,21 @@ def main():
                "Housing", "Climate and Physical Conditions", "Pollution", "Disease and Sanitation", "Medical Facilities",
                "Education Facilities", "Infrastructure", "Physical Remoteness", "Political Violence and Repression", "Political and Social Environment",
                "Crime", "Communications", "Cultural and Recreation Facilities", "Availability of Goods and Services"]
-    failedCities = {}
-
+    operationResult = {}
+    logging.basicConfig(filename= 'log.txt',
+                        level = logging.INFO,
+                        datefmt= '%d %b %Y - %H:%M:%S',
+                        format = '%(asctime)s: %(funcName)s: %(levelname)s: - %(message)s',
+                        filemode= 'a')
+    
     IO = IOM()
-    docFiles = IO.getFiles()
+    IO.convertDocToDocx()
+    docxFiles = IO.getFiles()
 
     resultDict = {}
-    for docFile in docFiles:
+    for docxFile in docxFiles:
         try:
-            doc = docM(fileName = docFile, headers = headers)
+            doc = docM(fileName = docxFile, headers = headers)
 
             cityName, countryName, countryCode, year  = doc.getDetails()
             cityCode = getMapping(cityName, "Code")
@@ -43,16 +49,32 @@ def main():
             resultDict[cityName]["Properties"] = [year, cityName, cityCode , countryName, countryCode]
             resultDict[cityName]["Content"] = description
             resultDict[cityName]["Rating"] = [region] + ratings
-        except Exception as ex:
-            failedCities[docFile] = ex
-            continue
-    try:
-        excel.convertToExcel(resultDict, headers)
-    except Exception as ex:
-        print(f"Problem: Writing to Excel - {ex}")
-    
-    for failedCity, reason  in failedCities.items():
-        print(f"{failedCity} - {reason}")
 
+            operationResult[docxFile] = 'Success'
+        except Exception as ex:
+            logging.error(f'{docxFile} - {ex.__str__()}')
+            operationResult[docxFile] = 'Failure'
+            continue
+
+        
+    #Write to Excel    
+    try:
+        excel.convertToExcel(IO.getCWPath(), resultDict, headers, year)
+    except Exception as ex:
+        logging.critical(f'Writing to Excel - {ex.__str__()}')
+    
+    #Move to related folders
+   
+    for docx, status in operationResult.items():
+        try:
+            if status == 'Success':
+                IO.moveToFolder(filePath = docx, folderIndex = 1)
+            else:
+                IO.moveToFolder(filePath = docx, folderIndex = 3)
+        except Exception as ex:
+            logging.warning(f'Process successful, but cannot move file - {ex.__str__()}')
+            continue
+
+    
 if __name__ == "__main__":
     main()
